@@ -40,6 +40,7 @@ type AuthContextValue = {
   signUpEmail: (email: string, password: string, name: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -140,6 +141,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }).catch(() => {});
       }
       await signOut(auth);
+    },
+    updateUserProfile: async (data) => {
+      if (!user) throw new Error("Not authenticated");
+      // Update Firebase Auth profile
+      const authUpdate: { displayName?: string; photoURL?: string } = {};
+      if (data.displayName) authUpdate.displayName = data.displayName;
+      
+      // Firebase auth photoURL has length limits, skip data URLs
+      if (data.photoURL && !data.photoURL.startsWith("data:")) {
+        authUpdate.photoURL = data.photoURL;
+      }
+
+      if (Object.keys(authUpdate).length > 0) {
+        await updateProfile(user, authUpdate);
+      }
+      // Update Firestore user doc
+      const firestoreUpdate: Record<string, unknown> = {};
+      if (data.displayName) firestoreUpdate.displayName = data.displayName;
+      if (data.photoURL) firestoreUpdate.photoURL = data.photoURL;
+      if (Object.keys(firestoreUpdate).length > 0) {
+        await updateDoc(doc(db, "users", user.uid), firestoreUpdate);
+      }
+      // Refresh local profile
+      const snap = await getDoc(doc(db, "users", user.uid));
+      setProfile(snap.data() as ChatUser);
     },
   };
 

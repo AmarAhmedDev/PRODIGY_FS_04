@@ -65,6 +65,10 @@ export function MessageComposer({ roomId }: Props) {
       toast.error("File must be under 15MB");
       return;
     }
+    
+    // Auto-detect if it's actually an image, even if uploaded via the file button
+    const actualKind = file.type.startsWith("image/") ? "image" : kind;
+
     setUploading(true);
     try {
       const res = await uploadToImageKit(file, "/chat");
@@ -73,7 +77,7 @@ export function MessageComposer({ roomId }: Props) {
         senderName: profile.displayName,
         senderPhoto: profile.photoURL,
         text: "",
-        type: kind,
+        type: actualKind,
         fileUrl: res.url,
         fileName: res.name,
         fileType: res.fileType,

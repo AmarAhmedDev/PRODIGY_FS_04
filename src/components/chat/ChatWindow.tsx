@@ -113,7 +113,7 @@ export function ChatWindow({ room, users }: Props) {
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto scrollbar-thin bg-app-gradient px-3 py-4 sm:px-6"
+        className="flex-1 overflow-y-auto scrollbar-thin bg-app-gradient px-2 py-4 sm:px-4"
       >
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
@@ -122,7 +122,7 @@ export function ChatWindow({ room, users }: Props) {
             </p>
           </div>
         )}
-        <div className="mx-auto flex max-w-3xl flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {messages.map((m, i) => {
             const prev = messages[i - 1];
             const next = messages[i + 1];
@@ -136,6 +136,7 @@ export function ChatWindow({ room, users }: Props) {
                 isMe={isMe}
                 showAvatar={showAvatar}
                 showName={showName}
+                users={users}
               />
             );
           })}

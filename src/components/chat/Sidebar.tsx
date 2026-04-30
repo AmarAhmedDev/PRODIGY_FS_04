@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Hash, Lock, Plus, LogOut, Search, Sun, Moon, MessageSquare, Users } from "lucide-react";
+import { Hash, Lock, Plus, LogOut, Search, Sun, Moon, MessageSquare, Users, Settings, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ import {
   type Room,
 } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
+import { ProfileEditDialog } from "./ProfileEditDialog";
+import { UserProfileDialog } from "./UserProfileDialog";
 
 type Props = {
   rooms: Room[];
@@ -34,6 +36,8 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
+  const [editProfile, setEditProfile] = useState(false);
+  const [viewingUser, setViewingUser] = useState<ChatUser | null>(null);
 
   const publicRooms = useMemo(
     () =>
@@ -49,14 +53,20 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
         .filter((r) => r.isPrivate)
         .map((r) => {
           const otherUid = r.participants?.find((p) => p !== profile?.uid);
-          const name = otherUid ? r.participantNames?.[otherUid] : "Unknown";
-          const photo = otherUid ? r.participantPhotos?.[otherUid] : "";
-          return { ...r, otherName: name ?? "Unknown", otherPhoto: photo ?? "" };
+          const otherUser = otherUid ? users.find(u => u.uid === otherUid) : null;
+          
+          // Use the latest user data if available, otherwise fallback to stored room data
+          const name = otherUser ? otherUser.displayName : (otherUid ? r.participantNames?.[otherUid] : "Unknown");
+          const photo = otherUser ? otherUser.photoURL : (otherUid ? r.participantPhotos?.[otherUid] : "");
+          
+          return { ...r, otherUid, hasActiveUser: !!otherUser, otherName: name ?? "Unknown", otherPhoto: photo ?? "" };
         })
+        // Only show DMs where the other user actually exists in the DB (filters out deleted mock users)
+        .filter((r) => r.hasActiveUser)
         .filter((r) =>
           r.otherName.toLowerCase().includes(search.toLowerCase()),
         ),
-    [rooms, profile?.uid, search],
+    [rooms, users, profile?.uid, search],
   );
 
   const otherUsers = useMemo(
@@ -87,10 +97,19 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
     <aside className="flex h-full w-full flex-col glass shadow-soft md:w-80 md:rounded-2xl md:m-3 md:mr-1.5">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border/60 p-4">
-        <Avatar className="h-10 w-10 ring-2 ring-primary/30">
-          <AvatarImage src={profile?.photoURL} />
-          <AvatarFallback>{profile?.displayName?.[0]?.toUpperCase()}</AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          onClick={() => setEditProfile(true)}
+          className="relative group cursor-pointer transition-transform hover:scale-105"
+        >
+          <Avatar className="h-10 w-10 ring-2 ring-primary/30">
+            <AvatarImage src={profile?.photoURL} className="object-cover" />
+            <AvatarFallback>{profile?.displayName?.[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Settings className="h-4 w-4 text-white" />
+          </span>
+        </button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
           <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
@@ -98,10 +117,23 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+        <Button variant="ghost" size="icon" onClick={async () => {
+          if (!confirm("Delete all other users from database?")) return;
+          const { deleteDoc, doc } = await import("firebase/firestore");
+          const { db } = await import("@/services/firebase");
+          for (const u of otherUsers) {
+            await deleteDoc(doc(db, "users", u.uid));
+          }
+          alert("Cleaned up!");
+        }} aria-label="Clean DB">
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={() => logout()} aria-label="Log out">
           <LogOut className="h-4 w-4" />
         </Button>
       </div>
+
+      <ProfileEditDialog open={editProfile} onOpenChange={setEditProfile} />
 
       {/* Search */}
       <div className="px-4 pt-3">
@@ -224,14 +256,17 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
             </p>
           )}
           {otherUsers.map((u) => (
-            <button
+            <div
               key={u.uid}
-              onClick={() => startDM(u)}
               className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-accent/60"
             >
-              <div className="relative">
+              <button
+                type="button"
+                onClick={() => setViewingUser(u)}
+                className="relative cursor-pointer transition-transform hover:scale-105"
+              >
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={u.photoURL} />
+                  <AvatarImage src={u.photoURL} className="object-cover" />
                   <AvatarFallback>{u.displayName?.[0]?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span
@@ -240,15 +275,25 @@ export function ChatSidebar({ rooms, users, selectedRoomId, onSelectRoom }: Prop
                     u.online ? "bg-online" : "bg-muted-foreground/40",
                   )}
                 />
-              </div>
-              <div className="min-w-0 flex-1">
+              </button>
+              <button
+                type="button"
+                onClick={() => startDM(u)}
+                className="min-w-0 flex-1 text-left cursor-pointer"
+              >
                 <p className="truncate text-sm font-medium">{u.displayName}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {u.online ? "Online" : "Offline"}
                 </p>
-              </div>
-            </button>
+              </button>
+            </div>
           ))}
+
+          <UserProfileDialog
+            user={viewingUser}
+            open={!!viewingUser}
+            onOpenChange={(open) => { if (!open) setViewingUser(null); }}
+          />
         </TabsContent>
       </Tabs>
     </aside>
