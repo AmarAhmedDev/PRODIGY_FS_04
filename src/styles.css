@@ -158,9 +158,22 @@
     border-color: var(--color-border);
   }
 
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+
+  /* Hide default scrollbar globally, keep scrollbar-thin for inner areas */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 }
 
@@ -189,6 +202,7 @@
     border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
   }
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
     border-radius: 999px;

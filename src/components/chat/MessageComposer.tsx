@@ -87,11 +87,11 @@ export function MessageComposer({ roomId }: Props) {
   }
 
   return (
-    <div className="border-t border-border/60 bg-card/40 p-3 backdrop-blur">
-      <div className="flex items-end gap-2">
+    <div className="border-t border-border/60 bg-card/40 px-4 py-4 backdrop-blur">
+      <div className="flex items-center gap-3">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="shrink-0">
+            <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10">
               <Smile className="h-5 w-5" />
             </Button>
           </PopoverTrigger>
@@ -108,7 +108,7 @@ export function MessageComposer({ roomId }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0"
+          className="shrink-0 h-10 w-10"
           onClick={() => imgRef.current?.click()}
           disabled={uploading}
         >
@@ -129,7 +129,7 @@ export function MessageComposer({ roomId }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0"
+          className="shrink-0 h-10 w-10"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
         >
@@ -157,13 +157,13 @@ export function MessageComposer({ roomId }: Props) {
           }}
           rows={1}
           placeholder="Type a message…"
-          className="flex-1 resize-none rounded-2xl border border-border bg-background/70 px-4 py-2.5 text-sm outline-none ring-primary/40 focus:ring-2 max-h-32"
+          className="flex-1 resize-none rounded-2xl border border-border bg-background/70 px-4 py-3 text-sm outline-none ring-primary/40 focus:ring-2 max-h-32 min-h-[44px]"
         />
 
         <Button
           onClick={handleSend}
           disabled={!text.trim() || uploading}
-          className="shrink-0 rounded-full bg-bubble-me shadow-glow hover:opacity-90"
+          className="shrink-0 rounded-full bg-bubble-me shadow-glow hover:opacity-90 h-10 w-10"
           size="icon"
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
