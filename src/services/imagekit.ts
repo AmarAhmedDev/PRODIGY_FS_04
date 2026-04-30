@@ -1,4 +1,4 @@
-import { getImageKitAuth } from "@/server/imagekit.functions";
+import { getImageKitAuth } from "./imagekit.functions";
 import { IMAGEKIT_PUBLIC_KEY, IMAGEKIT_URL_ENDPOINT } from "./firebase";
 
 export type UploadedFile = {
