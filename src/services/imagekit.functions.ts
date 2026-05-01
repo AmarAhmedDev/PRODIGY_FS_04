@@ -6,10 +6,7 @@ import crypto from "crypto";
  * computed using the private key stored as a server secret.
  */
 export const getImageKitAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
-  if (!privateKey) {
-    throw new Error("IMAGEKIT_PRIVATE_KEY is not configured");
-  }
+  const privateKey = "private_m7nG+h0EBbi5xXdJ8v64IU6Fvhs=";
   const token = crypto.randomUUID();
   const expire = Math.floor(Date.now() / 1000) + 60 * 30; // 30 min
   const signature = crypto

@@ -43,21 +43,14 @@ A professional and modern real-time chat application built as Task 4 for the Pro
    bun install
    ```
 
-3. Set up environment variables:
-   Create a `.env` file in the root directory (based on `.env.example`) to configure ImageKit backend signature generation:
-   ```env
-   IMAGEKIT_PRIVATE_KEY="your_imagekit_private_key_here"
-   ```
-   *Note: Firebase configuration and ImageKit Public Keys are configured within `src/services/firebase.ts`.*
-
-4. Start the development server:
+3. Start the development server:
    ```bash
    npm run dev
    # or
    bun run dev
    ```
 
-5. Open your browser and navigate to `http://localhost:5173`.
+4. Open your browser and navigate to `http://localhost:5173`.
 
 ## 📁 Project Structure
 
